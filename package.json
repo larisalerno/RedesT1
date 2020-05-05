@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/munaretto/udpsocket.git"
+    "url": "git+https://github.com/Gavets/RedesT1.git"
   },
   "keywords": [],
-  "author": "Guilherme Munaretto, Larissa Salerno, João Nascimento",
+  "author": "Guilherme Munaretto, João Nascimento, Larissa Salerno",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Gavets/RedesT1/issues"
   },
-  "homepage": "https://github.com/munaretto/udpsocket#readme",
+  "homepage": "https://github.com/Gavets/RedesT1#readme",
   "devDependencies": {
     "@types/node": "^13.9.5",
     "typescript": "^3.8.3"
