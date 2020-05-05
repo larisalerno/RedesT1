@@ -6,5 +6,8 @@ O transporte deverá ser feito em UDP, implementando a confirmação de recebime
 
 Para executar:  ```npm run tsc```
 
-Logo depois: ```node build/index.js``` para executar o servidor.
-             ```node build/client/udpClient.js``` para executar o cliente.
+Logo depois:
+
+```$ > node build/index.js``` para executar o servidor.
+
+```$ > node build/client/udpClient.js``` para executar o cliente.
