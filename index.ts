@@ -22,14 +22,13 @@ server.on('message', async (message, rinfo) => {
 
     console.log('received this: ', received_message);
     received_message.ack = 1;
-    received_message.code = "connected";
 
     response_messages.push(received_message);
 
     response_messages.map( async (message, index) => {
         
         console.log('response message: ', message);
-        while(message.ack == 1) {
+        while(message.ack == 1 && message.code == 'connect') {
             await sleep(6000);
             server.send(new Buffer(JSON.stringify(message)), port, host, (error) => {
                 if(error) throw error;

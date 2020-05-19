@@ -43,8 +43,25 @@ function play() {
                     });
 
                     await sleep(2000);
-                    client.on('message', (message, info) => {
+                    client.on('message', async (message, info) => {
                         console.log(message);
+                        
+                        let received_message = JSON.parse(message.toString());
+                        while(received_message.ack == 1) {
+                            await sleep(5000);
+
+                            received_message.ack = 2;
+
+                            client.send(new Buffer(JSON.stringify(received_message)), port, host, (error) => {
+                                console.log('error: ', error);
+                            });
+                        }
+
+                        messages.map((value, pos) => {
+                            if(value.code === 'connect') {
+                                messages.splice(pos, 1);
+                            }
+                        });
                     })
                 }
                 console.log('Stopped trying to send message!');
@@ -52,6 +69,11 @@ function play() {
 
 
             play();
+        }
+
+        if(result.answer === 'play') {
+            let play_message = { code: 'play', ack: 0, message: result.answer, status: 0};
+            messages.push(play_message);
         }
 
     });
