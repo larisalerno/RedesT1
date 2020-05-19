@@ -54,7 +54,7 @@ function sleep(ms) {
 function play() {
     var _this = this;
     prompt.get(['answer'], function (err, result) { return __awaiter(_this, void 0, void 0, function () {
-        var message_1;
+        var message_1, play_message;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -76,6 +76,7 @@ function play() {
                 case 1:
                     _a.sent();
                     messages.map(function (value, index) { return __awaiter(_this, void 0, void 0, function () {
+                        var _this = this;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
@@ -89,9 +90,34 @@ function play() {
                                     return [4 /*yield*/, sleep(2000)];
                                 case 2:
                                     _a.sent();
-                                    client.on('message', function (message, info) {
-                                        console.log(message);
-                                    });
+                                    client.on('message', function (message, info) { return __awaiter(_this, void 0, void 0, function () {
+                                        var received_message;
+                                        return __generator(this, function (_a) {
+                                            switch (_a.label) {
+                                                case 0:
+                                                    console.log(message);
+                                                    received_message = JSON.parse(message.toString());
+                                                    _a.label = 1;
+                                                case 1:
+                                                    if (!(received_message.ack == 1)) return [3 /*break*/, 3];
+                                                    return [4 /*yield*/, sleep(5000)];
+                                                case 2:
+                                                    _a.sent();
+                                                    received_message.ack = 2;
+                                                    client.send(new Buffer(JSON.stringify(received_message)), port, host, function (error) {
+                                                        console.log('error: ', error);
+                                                    });
+                                                    return [3 /*break*/, 1];
+                                                case 3:
+                                                    messages.map(function (value, pos) {
+                                                        if (value.code === 'connect') {
+                                                            messages.splice(pos, 1);
+                                                        }
+                                                    });
+                                                    return [2 /*return*/];
+                                            }
+                                        });
+                                    }); });
                                     return [3 /*break*/, 0];
                                 case 3:
                                     console.log('Stopped trying to send message!');
@@ -101,7 +127,12 @@ function play() {
                     }); });
                     play();
                     _a.label = 2;
-                case 2: return [2 /*return*/];
+                case 2:
+                    if (result.answer === 'play') {
+                        play_message = { code: 'play', ack: 0, message: result.answer, status: 0 };
+                        messages.push(play_message);
+                    }
+                    return [2 /*return*/];
             }
         });
     }); });

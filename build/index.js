@@ -52,30 +52,33 @@ server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0
     var received_message;
     return __generator(this, function (_a) {
         received_message = JSON.parse(message.toString());
-        console.log('received this: ', received_message);
-        received_message.ack = 1;
-        received_message.code = "connected";
-        response_messages.push(received_message);
-        response_messages.map(function (message, index) { return __awaiter(void 0, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        console.log('response message: ', message);
-                        _a.label = 1;
-                    case 1:
-                        if (!(message.ack == 1)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, sleep(6000)];
-                    case 2:
-                        _a.sent();
-                        server.send(new Buffer(JSON.stringify(message)), port, host, function (error) {
-                            if (error)
-                                throw error;
-                        });
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }); });
+        if (received_message.code == "connect") {
+            response_messages.push(received_message);
+            received_message.ack = 1;
+            response_messages.map(function (message, index) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            console.log('response message: ', message);
+                            _a.label = 1;
+                        case 1:
+                            if (!(message.ack == 1 && message.code == 'connect')) return [3 /*break*/, 3];
+                            return [4 /*yield*/, sleep(6000)];
+                        case 2:
+                            _a.sent();
+                            server.send(new Buffer(JSON.stringify(message)), port, host, function (error) {
+                                if (error)
+                                    throw error;
+                            });
+                            return [3 /*break*/, 1];
+                        case 3: return [2 /*return*/];
+                    }
+                });
+            }); });
+        }
+        else {
+            console.log("message was different from connect: ", message);
+        }
         return [2 /*return*/];
     });
 }); });

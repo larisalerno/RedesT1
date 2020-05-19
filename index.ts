@@ -20,21 +20,26 @@ server.on('message', async (message, rinfo) => {
 
     let received_message = JSON.parse(message.toString());
 
-    console.log('received this: ', received_message);
-    received_message.ack = 1;
-
-    response_messages.push(received_message);
-
-    response_messages.map( async (message, index) => {
+    if (received_message.code == "connect") {
+        response_messages.push(received_message);
+        received_message.ack = 1;
+        response_messages.map( async (message, index) => {
         
-        console.log('response message: ', message);
-        while(message.ack == 1 && message.code == 'connect') {
-            await sleep(6000);
-            server.send(new Buffer(JSON.stringify(message)), port, host, (error) => {
-                if(error) throw error;
-            });
-        }
-    });  
+            console.log('response message: ', message);
+            while(message.ack == 1 && message.code == 'connect') {
+                await sleep(6000);
+                server.send(new Buffer(JSON.stringify(message)), port, host, (error) => {
+                    if(error) throw error;
+                });
+            }
+        });  
+    } else {
+        console.log("message was different from connect: ", message);
+    }
+
+    
+
+
 });
 
 
