@@ -6,7 +6,7 @@ const port           :  number  =  5800;
 const client         :  Socket  = createSocket("udp4");
 
 function play() {
-    prompt.get(['answer'], function (err, result) {
+    prompt.get(['answer'], function (err : any, result : any) {
         if (err) { return onErr(err); }
 
         if(result.answer === 'connect') {

@@ -12,14 +12,10 @@ function play() {
         }
         if (result.answer === 'connect') {
             client.send('connect', port, host, function (message, info) {
-                console.log('Attempting to connect with Silvio Santos...');
-                console.log('player ', message);
-            });
-            client.on('connected', function (message, error) {
-                console.log('message: ', message);
+                console.log('Attempting to connect with server...');
             });
         }
-        if (result.resposta === 'exit') {
+        if (result.answer === 'exit') {
             console.log('Game over!');
         }
         else {
