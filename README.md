@@ -4,7 +4,7 @@ O trabalho consiste em criar um jogo cliente-servidor utilizando sockets.
 
 O transporte deverá ser feito em UDP, implementando a confirmação de recebimento do pacote por parte tanto do cliente quanto do servidor.
 
-Para compila TS -> JS:  ```npm run tsc```
+Para compilar TS -> JS:  ```npm run tsc```
 
 Logo depois:
 
