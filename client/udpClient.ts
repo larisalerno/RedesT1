@@ -14,9 +14,7 @@ let messages : any[] = [];
  * 2 : sent, ack received
  */
 
-function sleep(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
-}
+
 
 function play() {
     prompt.get(['answer'], async (err : any, result : any) => {
@@ -82,6 +80,10 @@ function play() {
 prompt.start();
 
 play();
+
+function sleep(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
 
 function onErr(err : any) {
     console.log(err);
