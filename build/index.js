@@ -40,46 +40,46 @@ var dgram_1 = require("dgram");
 var host = '127.0.0.1';
 var port = 5801;
 var server = dgram_1.createSocket('udp4');
-var players = 0;
-var response_messages = [];
+var connection_message = { code: 'conn', ack: 0, message: '' };
+var messages = [];
 function sleep(ms) {
     return new Promise(function (resolve) { return setTimeout(resolve, ms); });
 }
 server.on('listening', function () {
-    console.log("Silvio Santos is listening on port 5800.");
+    console.log("                                                                    ,*,(/,,                         \n                                                               , .,  ...,*,,                        \n                                                       .  .. . .  , .  , .,/,                       \n                                                 ,/.  .  ,.,. .. ,, , ,*,.*,                        \n                                           .,*,,.,, ...,,., ,. .,/.,,*,,,,.                         \n                                        ./. .  . . ,,. ..,,..,,..*,/,*.**                           \n                                     ., ,. .,,..,. ..,,  ,.,*.,,(,*.,,*.                            \n                                  ..,..,.,    *..*.,.,.,,,,,*,*,.,,**,                              \n                              .....,.,.  ,,,  .,,..,,,/.,,,*,.,,,*,*                                \n                           ..  ...... ** .,,,,., ,.,. ,,**.,,**,*,**                                \n                         . .  ,.,..,  . ,/. ..,,,/.,**..,,,*/,*%#(/*,*,,.                           \n                     .  ,..,..,..,.   , ,.,,.*.......,,,**,*%#((/**,,,,,......                      \n                     .. ......,, .,(. ,,,/*.....,,,,,,/,,%#((//**,,,,..............                 \n                *,,, .,..,,..,.,*,.*,*/ .. .,,,,,,,/,,,#((((//**,,,..*,,,,,... ,......,             \n              .,.,..,..,,.,.,,,.,..*..,..,,,,,,/,,,*(((((/(//////**,*,,,,,.,...*,,........          \n             .,#/,/(,,,,,,,.,,,,*.,.,,.,,,,*,,,,*//////////////***/*****,*,*.*,,,,*,,.,,,,,,.       \n            , / / ./*/,**,,, ......,,,,*,,,,,(    #(//////////*/**//**/**,*/,*/,***,,.,,,.,*..,*    \n            ,.*, .*/,/,,,......,.,,,,,,.*/             .(((///*****,,,*,,,,****,**,******...#///    \n       .. ,*. .,/.,*////*,*,,,.. ,.,,**                       #((/*******,********/***/##./,,.(/    \n     ,..,. .,.,**/.....,,,,,,,,,,,,                                   #///*****/**/*****/****/*     \n     ..,,,,.,,,,,,,,,,,,**,,,*                                                    /#(//,            \n      ,/*,,,,,****                                                                                  \n      \n\n\n      \n      O Show do Milh\u00E3o vai come\u00E7ar! Aguardando um jogar se conectar...\n      ");
 });
 server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
     var received_message;
     return __generator(this, function (_a) {
-        received_message = JSON.parse(message.toString());
-        if (received_message.code == "connect") {
-            response_messages.push(received_message);
-            received_message.ack = 1;
-            response_messages.map(function (message, index) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            console.log('response message: ', message);
-                            _a.label = 1;
-                        case 1:
-                            if (!(message.ack == 1 && message.code == 'connect')) return [3 /*break*/, 3];
-                            return [4 /*yield*/, sleep(6000)];
-                        case 2:
-                            _a.sent();
-                            server.send(new Buffer(JSON.stringify(message)), port, host, function (error) {
-                                if (error)
-                                    throw error;
-                            });
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
+        switch (_a.label) {
+            case 0:
+                console.log(message.toString());
+                received_message = JSON.parse(message.toString());
+                if (received_message.code == 'conn') {
+                    console.log('Um jogador tentou se conectar, vamos aguardar.');
+                }
+                if (!(received_message.code == 'conn' && received_message.ack == 0)) return [3 /*break*/, 2];
+                received_message.ack = 1;
+                return [4 /*yield*/, sleep(6000)];
+            case 1:
+                _a.sent();
+                server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                    if (error)
+                        throw error;
                 });
-            }); });
+                return [3 /*break*/, 3];
+            case 2:
+                console.log("message was different from connect: ", message);
+                if (received_message.code == 'start' && received_message.ack == 0) {
+                    console.log("Vamos começar. Enviando a primeira pergunta e suas alternativas.\n\n");
+                    server.send(Buffer.from(JSON.stringify({ code: 'question', question: 'Qual a capital da França?', answers: [{ a: 'Paris', b: 'Roma', c: 'Berlim' }] })), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                }
+                _a.label = 3;
+            case 3: return [2 /*return*/];
         }
-        else {
-            console.log("message was different from connect: ", message);
-        }
-        return [2 /*return*/];
     });
 }); });
 server.bind(5800);

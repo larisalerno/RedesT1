@@ -41,96 +41,46 @@ var prompt = require('prompt');
 var host = '127.0.0.1';
 var port = 5800;
 var client = dgram_1.createSocket("udp4");
-var messages = [];
+var sent_messages = [];
+var connection_message = { code: 'conn', ack: 0, message: '' };
+var connected = false;
 /**
  * Statuses:
  * 0 : not sent
  * 1 : sent, no ack received
  * 2 : sent, ack received
+ * 3 : sent, both sides received the message. stop sending this object.
  */
-function sleep(ms) {
-    return new Promise(function (resolve) { return setTimeout(resolve, ms); });
+function sleep(s) {
+    return new Promise(function (resolve) { return setTimeout(resolve, s * 1000); });
 }
 function play() {
     var _this = this;
     prompt.get(['answer'], function (err, result) { return __awaiter(_this, void 0, void 0, function () {
-        var message_1, play_message;
-        var _this = this;
+        var stat_game_message;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    /**
+                     * Will stay here until ack 2 is reached.
+                     */
                     if (err) {
                         return [2 /*return*/, onErr(err)];
                     }
-                    if (result.answer === 'messages') {
-                        messages.map(function (a, b) {
-                            console.log('message: ', a);
-                        });
-                        play();
-                    }
                     if (!(result.answer === 'connect')) return [3 /*break*/, 2];
-                    message_1 = { code: 'connect', ack: 0, message: result.answer, status: 0 };
-                    messages.push(message_1);
-                    console.log('Trying to connect...');
-                    return [4 /*yield*/, sleep(5000)];
+                    console.log('Tentando comunicação com Silvio Santos...');
+                    return [4 /*yield*/, sleep(5)];
                 case 1:
                     _a.sent();
-                    messages.map(function (value, index) { return __awaiter(_this, void 0, void 0, function () {
-                        var _this = this;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    if (!(value.code == 'connect' && value.ack == 0)) return [3 /*break*/, 3];
-                                    return [4 /*yield*/, sleep(2000)];
-                                case 1:
-                                    _a.sent();
-                                    client.send(new Buffer(JSON.stringify(message_1)), port, host, function (error) {
-                                        console.log('Error: ', error);
-                                    });
-                                    return [4 /*yield*/, sleep(2000)];
-                                case 2:
-                                    _a.sent();
-                                    client.on('message', function (message, info) { return __awaiter(_this, void 0, void 0, function () {
-                                        var received_message;
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    console.log(message);
-                                                    received_message = JSON.parse(message.toString());
-                                                    _a.label = 1;
-                                                case 1:
-                                                    if (!(received_message.ack == 1)) return [3 /*break*/, 3];
-                                                    return [4 /*yield*/, sleep(5000)];
-                                                case 2:
-                                                    _a.sent();
-                                                    received_message.ack = 2;
-                                                    client.send(new Buffer(JSON.stringify(received_message)), port, host, function (error) {
-                                                        console.log('error: ', error);
-                                                    });
-                                                    return [3 /*break*/, 1];
-                                                case 3:
-                                                    messages.map(function (value, pos) {
-                                                        if (value.code === 'connect') {
-                                                            messages.splice(pos, 1);
-                                                        }
-                                                    });
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    }); });
-                                    return [3 /*break*/, 0];
-                                case 3:
-                                    console.log('Stopped trying to send message!');
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); });
-                    play();
+                    client.send(Buffer.from(JSON.stringify(connection_message)), port, host, function (error, bytes) { });
                     _a.label = 2;
-                case 2:
-                    if (result.answer === 'play') {
-                        play_message = { code: 'play', ack: 0, message: result.answer, status: 0 };
-                        messages.push(play_message);
+                case 2: return [4 /*yield*/, sleep(2)];
+                case 3:
+                    _a.sent();
+                    if (result.answer === 'start') {
+                        console.log("Tudo certo, vamos começar!");
+                        stat_game_message = { code: 'start', ack: 0, message: '' };
+                        client.send(Buffer.from(JSON.stringify(stat_game_message)), port, host, function (error, bytes) { });
                     }
                     return [2 /*return*/];
             }
@@ -139,6 +89,21 @@ function play() {
 }
 prompt.start();
 play();
+client.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
+    var received_message;
+    return __generator(this, function (_a) {
+        received_message = JSON.parse(message.toString());
+        if (received_message.code == 'conn' && received_message.ack == 1) {
+            console.log('Conectado!');
+            play();
+        }
+        if (received_message.code == 'question') {
+            console.log("########### #############");
+            console.log(received_message);
+        }
+        return [2 /*return*/];
+    });
+}); });
 function onErr(err) {
     console.log(err);
     return 1;
