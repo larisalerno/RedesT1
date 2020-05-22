@@ -48,9 +48,6 @@ var messages = [];
  * 1 : sent, no ack received
  * 2 : sent, ack received
  */
-function sleep(ms) {
-    return new Promise(function (resolve) { return setTimeout(resolve, ms); });
-}
 function play() {
     var _this = this;
     prompt.get(['answer'], function (err, result) { return __awaiter(_this, void 0, void 0, function () {
@@ -139,6 +136,9 @@ function play() {
 }
 prompt.start();
 play();
+function sleep(ms) {
+    return new Promise(function (resolve) { return setTimeout(resolve, ms); });
+}
 function onErr(err) {
     console.log(err);
     return 1;

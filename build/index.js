@@ -37,49 +37,58 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var dgram_1 = require("dgram");
-var host = '127.0.0.1';
-var port = 5801;
-var server = dgram_1.createSocket('udp4');
-var players = 0;
-var response_messages = [];
+var mssage_code_enum_1 = require("./shared/enums/mssage-code.enum");
+var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
+(function () {
+    var host = '127.0.0.1';
+    var port = 5801;
+    var response_messages = [];
+    var server = dgram_1.createSocket('udp4');
+    server.on('listening', function () {
+        console.log("Silvio Santos is listening on port 5800.");
+    });
+    server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
+        var received_message;
+        return __generator(this, function (_a) {
+            received_message = JSON.parse(message.toString());
+            if (received_message.code === mssage_code_enum_1.MessageCode.CONNECT) {
+                response_messages.push(received_message);
+                received_message.ack = ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED;
+                response_messages.map(function (message, index) { return __awaiter(void 0, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                console.log('response message: ', message);
+                                _a.label = 1;
+                            case 1:
+                                if (!(message.ack === ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED && message.code === mssage_code_enum_1.MessageCode.CONNECT)) return [3 /*break*/, 3];
+                                return [4 /*yield*/, sleep(6000)];
+                            case 2:
+                                _a.sent();
+                                server.send(new Buffer(JSON.stringify(message)), port, host, function (error) {
+                                    if (error)
+                                        throw error;
+                                });
+                                return [3 /*break*/, 1];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                }); });
+            }
+            /**
+             * @TODO Código que irá tratar a resposta do usuário para a pergunta
+             */
+            else if (received_message.code === mssage_code_enum_1.MessageCode.ANSWER_RECEIVED) {
+                console.log("received an answer from client: ", message);
+            }
+            return [2 /*return*/];
+        });
+    }); });
+    server.bind(5800);
+})();
+function generateQuestions() {
+    return [];
+}
 function sleep(ms) {
     return new Promise(function (resolve) { return setTimeout(resolve, ms); });
 }
-server.on('listening', function () {
-    console.log("Silvio Santos is listening on port 5800.");
-});
-server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
-    var received_message;
-    return __generator(this, function (_a) {
-        received_message = JSON.parse(message.toString());
-        if (received_message.code == "connect") {
-            response_messages.push(received_message);
-            received_message.ack = 1;
-            response_messages.map(function (message, index) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            console.log('response message: ', message);
-                            _a.label = 1;
-                        case 1:
-                            if (!(message.ack == 1 && message.code == 'connect')) return [3 /*break*/, 3];
-                            return [4 /*yield*/, sleep(6000)];
-                        case 2:
-                            _a.sent();
-                            server.send(new Buffer(JSON.stringify(message)), port, host, function (error) {
-                                if (error)
-                                    throw error;
-                            });
-                            return [3 /*break*/, 1];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }); });
-        }
-        else {
-            console.log("message was different from connect: ", message);
-        }
-        return [2 /*return*/];
-    });
-}); });
-server.bind(5800);

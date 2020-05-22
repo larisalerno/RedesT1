@@ -1,11 +1,11 @@
 import { createSocket, Socket } from 'dgram';
 const prompt = require('prompt');
 
-const host           :  string  = '127.0.0.1';
-const port           :  number  =  5800;
-const client         :  Socket  = createSocket("udp4");
+const host    :  string  = '127.0.0.1';
+const port    :  number  =  5800;
+const client  :  Socket  = createSocket("udp4");
 
-let messages : any[] = [];
+let messages  : any[] = [];
 
 /**
  * Statuses:
@@ -14,12 +14,10 @@ let messages : any[] = [];
  * 2 : sent, ack received
  */
 
-function sleep(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
-}
+
 
 function play() {
-    prompt.get(['answer'], async (err, result) => {
+    prompt.get(['answer'], async (err : any, result : any) => {
         if (err) { return onErr(err); }
 
         if(result.answer === 'messages') {
@@ -83,7 +81,11 @@ prompt.start();
 
 play();
 
-function onErr(err) {
+function sleep(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
+
+function onErr(err : any) {
     console.log(err);
     return 1;
 }
