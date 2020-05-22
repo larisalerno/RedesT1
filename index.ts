@@ -20,11 +20,11 @@ import { AckStatus } from "./shared/enums/ack-status.enum";
     
         if (received_message.code === MessageCode.CONNECT) {
             response_messages.push(received_message);
-            received_message.acknowledgement = AckStatus.SENT_NO_ACK_RECEIVED;
+            received_message.ack = AckStatus.SENT_NO_ACK_RECEIVED;
             response_messages.map( async (message, index) => {
             
                 console.log('response message: ', message);
-                while(message.acknowledgement === AckStatus.SENT_NO_ACK_RECEIVED && message.code === MessageCode.CONNECT) {
+                while(message.ack === AckStatus.SENT_NO_ACK_RECEIVED && message.code === MessageCode.CONNECT) {
                     await sleep(6000);
                     server.send(new Buffer(JSON.stringify(message)), port, host, (error) => {
                         if(error) throw error;

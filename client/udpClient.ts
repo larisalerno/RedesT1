@@ -1,11 +1,11 @@
 import { createSocket, Socket } from 'dgram';
 const prompt = require('prompt');
 
-const host           :  string  = '127.0.0.1';
-const port           :  number  =  5800;
-const client         :  Socket  = createSocket("udp4");
+const host    :  string  = '127.0.0.1';
+const port    :  number  =  5800;
+const client  :  Socket  = createSocket("udp4");
 
-let messages : any[] = [];
+let messages  : any[] = [];
 
 /**
  * Statuses:
