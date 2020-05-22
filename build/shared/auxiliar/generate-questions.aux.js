@@ -35,33 +35,47 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var dgram_1 = require("dgram");
-var message_code_enum_1 = require("./shared/enums/message-code.enum");
-var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
-var current_message = {};
-(function () {
-    var host = '127.0.0.1';
-    var port = 5801;
-    var response_messages = [];
-    var server = dgram_1.createSocket('udp4');
-    server.on('listening', function () {
-        console.log("Silvio Santos is listening on port 5800.");
-    });
-    server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
-        var received_message;
+var questions_1 = require("../../misc/questions");
+var questions_2 = require("../../misc/questions");
+var questions_3 = require("../../misc/questions");
+var random_aux_1 = __importDefault(require("./random.aux"));
+function default_1(difficulty) {
+    return __awaiter(this, void 0, void 0, function () {
+        var chosen_question, number;
         return __generator(this, function (_a) {
-            received_message = JSON.parse(message.toString());
-            if (received_message.code == message_code_enum_1.MessageCode.CONNECT) {
-                received_message.ack = ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED;
-                current_message = received_message;
-                server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
-                    if (error)
-                        throw error;
-                });
+            switch (_a.label) {
+                case 0:
+                    chosen_question = {};
+                    return [4 /*yield*/, random_aux_1.default(0, 4)];
+                case 1:
+                    number = _a.sent();
+                    switch (difficulty) {
+                        case 'easy':
+                            questions_1.easyQuestions.map(function (question, value) {
+                                console.log(question);
+                                chosen_question = question;
+                            });
+                            break;
+                        case 'medium':
+                            questions_2.mediumQuestions.map(function (question, value) {
+                                console.log(question);
+                                chosen_question = question;
+                            });
+                            break;
+                        case 'hard':
+                            questions_3.hardQuestions.map(function (question, value) {
+                                console.log(question);
+                                chosen_question = question;
+                            });
+                            break;
+                    }
+                    return [2 /*return*/, chosen_question];
             }
-            return [2 /*return*/];
         });
-    }); });
-    server.bind(5800);
-})();
+    });
+}
+exports.default = default_1;

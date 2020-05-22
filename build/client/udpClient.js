@@ -35,13 +35,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var dgram_1 = require("dgram");
+var message_code_enum_1 = require("../shared/enums/message-code.enum");
+var ack_status_enum_1 = require("../shared/enums/ack-status.enum");
+var sleep_aux_1 = __importDefault(require("../shared/auxiliar/sleep.aux"));
+var retries_enum_1 = require("../shared/enums/retries.enum");
 var prompt = require('prompt');
 var host = '127.0.0.1';
 var port = 5800;
 var client = dgram_1.createSocket("udp4");
-var messages = [];
+var current_message = {};
+var connected = false;
 /**
  * Statuses:
  * 0 : not sent
@@ -51,84 +59,47 @@ var messages = [];
 function play() {
     var _this = this;
     prompt.get(['answer'], function (err, result) { return __awaiter(_this, void 0, void 0, function () {
-        var message_1, play_message;
-        var _this = this;
+        var retries, message;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     if (err) {
                         return [2 /*return*/, onErr(err)];
                     }
-                    if (result.answer === 'messages') {
-                        messages.map(function (a, b) {
-                            console.log('message: ', a);
-                        });
-                        play();
+                    if (result.answer === 'status') {
+                        console.log('Está conectado? ', connected ? 'Sim' : 'Não');
                     }
-                    if (!(result.answer === 'connect')) return [3 /*break*/, 2];
-                    message_1 = { code: 'connect', ack: 0, message: result.answer, status: 0 };
-                    messages.push(message_1);
-                    console.log('Trying to connect...');
-                    return [4 /*yield*/, sleep(5000)];
+                    if (!(result.answer === 'connect')) return [3 /*break*/, 4];
+                    retries = 0;
+                    message = { code: message_code_enum_1.MessageCode.CONNECT, ack: ack_status_enum_1.AckStatus.NOT_SENT };
+                    // Armazena a mensagem atual
+                    current_message = message;
+                    _a.label = 1;
                 case 1:
-                    _a.sent();
-                    messages.map(function (value, index) { return __awaiter(_this, void 0, void 0, function () {
-                        var _this = this;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    if (!(value.code == 'connect' && value.ack == 0)) return [3 /*break*/, 3];
-                                    return [4 /*yield*/, sleep(2000)];
-                                case 1:
-                                    _a.sent();
-                                    client.send(new Buffer(JSON.stringify(message_1)), port, host, function (error) {
-                                        console.log('Error: ', error);
-                                    });
-                                    return [4 /*yield*/, sleep(2000)];
-                                case 2:
-                                    _a.sent();
-                                    client.on('message', function (message, info) { return __awaiter(_this, void 0, void 0, function () {
-                                        var received_message;
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    console.log(message);
-                                                    received_message = JSON.parse(message.toString());
-                                                    _a.label = 1;
-                                                case 1:
-                                                    if (!(received_message.ack == 1)) return [3 /*break*/, 3];
-                                                    return [4 /*yield*/, sleep(5000)];
-                                                case 2:
-                                                    _a.sent();
-                                                    received_message.ack = 2;
-                                                    client.send(new Buffer(JSON.stringify(received_message)), port, host, function (error) {
-                                                        console.log('error: ', error);
-                                                    });
-                                                    return [3 /*break*/, 1];
-                                                case 3:
-                                                    messages.map(function (value, pos) {
-                                                        if (value.code === 'connect') {
-                                                            messages.splice(pos, 1);
-                                                        }
-                                                    });
-                                                    return [2 /*return*/];
-                                            }
-                                        });
-                                    }); });
-                                    return [3 /*break*/, 0];
-                                case 3:
-                                    console.log('Stopped trying to send message!');
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); });
-                    play();
-                    _a.label = 2;
+                    if (!(retries < retries_enum_1.Retries.CONNECT)) return [3 /*break*/, 3];
+                    client.send(Buffer.from(JSON.stringify(message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    console.log("Estabelecendo conex\u00E3o...");
+                    return [4 /*yield*/, sleep_aux_1.default(4000)];
                 case 2:
-                    if (result.answer === 'play') {
-                        play_message = { code: 'play', ack: 0, message: result.answer, status: 0 };
-                        messages.push(play_message);
+                    _a.sent();
+                    retries++;
+                    console.log("Tentativa " + retries);
+                    if (current_message.code == message_code_enum_1.MessageCode.CONNECT && current_message.ack == ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED) {
+                        console.log('Conexão estabelecida!');
+                        connected = true;
+                        return [3 /*break*/, 3];
                     }
+                    return [3 /*break*/, 1];
+                case 3:
+                    if (current_message.code == message_code_enum_1.MessageCode.CONNECT && current_message.ack == ack_status_enum_1.AckStatus.NOT_SENT) {
+                        console.log('Não foi possível estabelecer uma conexão.');
+                    }
+                    _a.label = 4;
+                case 4:
+                    play();
                     return [2 /*return*/];
             }
         });
@@ -136,11 +107,19 @@ function play() {
 }
 prompt.start();
 play();
-function sleep(ms) {
-    return new Promise(function (resolve) { return setTimeout(resolve, ms); });
-}
 function onErr(err) {
     console.log(err);
     return 1;
 }
+client.on("message", function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
+    var json_message;
+    return __generator(this, function (_a) {
+        json_message = JSON.parse(message.toString());
+        current_message = json_message;
+        if (json_message.code == message_code_enum_1.MessageCode.CONNECT && json_message.ack == ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED) {
+            current_message = json_message;
+        }
+        return [2 /*return*/];
+    });
+}); });
 client.bind(5801);

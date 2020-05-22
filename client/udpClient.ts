@@ -1,11 +1,21 @@
-import { createSocket, Socket } from 'dgram';
+import { createSocket, Socket, RemoteInfo } from 'dgram';
+import { Message } from '../shared/interfaces/message.interface';
+import { MessageCode } from '../shared/enums/message-code.enum';
+import { AckStatus } from '../shared/enums/ack-status.enum';
+import sleep from "../shared/auxiliar/sleep.aux";
+import { Retries } from '../shared/enums/retries.enum';
+
+
 const prompt = require('prompt');
 
 const host    :  string  = '127.0.0.1';
 const port    :  number  =  5800;
 const client  :  Socket  = createSocket("udp4");
 
-let messages  : any[] = [];
+let current_message     : any     = {};
+let current_question    : any     = {};
+let received_question   : any     = {};
+let connected           : boolean = false;
 
 /**
  * Statuses:
@@ -14,65 +24,23 @@ let messages  : any[] = [];
  * 2 : sent, ack received
  */
 
-
-
 function play() {
     prompt.get(['answer'], async (err : any, result : any) => {
         if (err) { return onErr(err); }
 
-        if(result.answer === 'messages') {
-            messages.map( (a, b) => {
-                console.log('message: ', a);
-            })
-            play();
+        if(result.answer === 'status') {
+            await status();
         }
 
         if(result.answer === 'connect') {
-            let message = { code: 'connect', ack: 0, message: result.answer, status: 0 };
-            messages.push(message);
-            console.log('Trying to connect...');
-            await sleep(5000);
-
-            messages.map(async (value, index) => {
-                while(value.code == 'connect' && value.ack == 0) {
-                    await sleep(2000);
-                    client.send(new Buffer(JSON.stringify(message)), port, host, (error) => {
-                        console.log('Error: ', error);
-                    });
-
-                    await sleep(2000);
-                    client.on('message', async (message, info) => {
-                        console.log(message);
-                        
-                        let received_message = JSON.parse(message.toString());
-                        while(received_message.ack == 1) {
-                            await sleep(5000);
-
-                            received_message.ack = 2;
-
-                            client.send(new Buffer(JSON.stringify(received_message)), port, host, (error) => {
-                                console.log('error: ', error);
-                            });
-                        }
-
-                        messages.map((value, pos) => {
-                            if(value.code === 'connect') {
-                                messages.splice(pos, 1);
-                            }
-                        });
-                    })
-                }
-                console.log('Stopped trying to send message!');
-            });
-
-
-            play();
+            await connect();
         }
 
-        if(result.answer === 'play') {
-            let play_message = { code: 'play', ack: 0, message: result.answer, status: 0};
-            messages.push(play_message);
+        if(result.start === 'start') {
+            await start();
         }
+
+        play();
 
     });
 }
@@ -81,13 +49,84 @@ prompt.start();
 
 play();
 
-function sleep(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
-}
-
 function onErr(err : any) {
     console.log(err);
     return 1;
+}
+
+client.on("message", async (message : Buffer, rinfo : RemoteInfo) => {
+    let json_message : Message = JSON.parse(message.toString());
+
+    if (json_message.code == MessageCode.CONNECT) {
+        current_message = json_message;
+    }
+
+});
+
+
+//  ################# MÉTODOS AUXILIARES ####################
+
+async function status() {
+    console.log('Está conectado? ', connected? 'Sim' : 'Não');
+}
+
+async function connect() {
+    let retries = 0;
+
+    // Constroi a mensagem
+    let message : Message = { code: MessageCode.CONNECT, ack: AckStatus.SENT_NO_ACK };
+
+    // Armazena a mensagem atual
+    current_message = message;
+
+    // Inicia a iteração para tentar estabelecer conexão. Máximo de tentativas: 3
+    while(retries < Retries.CONNECT) {
+        client.send(Buffer.from(JSON.stringify(message)), port, host, (error) => {
+            if(error) throw error;
+        });
+            console.log(`Estabelecendo conexão...`);
+            await sleep(4000);
+            retries++;
+            console.log(`Tentativa ${retries}`);
+        if (current_message.code == MessageCode.CONNECT && current_message.ack == AckStatus.SENT_ACK_OK) {
+            console.log('Conexão estabelecida!');
+            connected = true;
+            break;
+        }
+    }
+
+    if(current_message.code == MessageCode.CONNECT && current_message.ack == AckStatus.SENT_NO_ACK) {
+        console.log('Não foi possível estabelecer uma conexão.');
+    }
+
+}
+
+
+/** Ainda não funcional! */
+async function start() {
+    
+    if(!connected) {
+        console.log('Não está conectado.');
+    } else {
+
+        let retries = 0;
+
+        let message : Message = { code: MessageCode.GAME_STARTED, ack: AckStatus.SENT_NO_ACK };
+
+        client.send(Buffer.from(JSON.stringify(message)), port, host, (error) => {
+            if(error) throw error;
+        });
+        console.log(`Aguardando uma pergunta...`);
+            await sleep(4000);
+            retries++;
+            console.log(`Tentativa ${retries}`);
+        if (current_message.code == MessageCode.CONNECT && current_message.ack == AckStatus.SENT_ACK_OK) {
+            console.log('Conexão estabelecida!');
+            connected = true;
+            break;
+        }
+
+    }
 }
 
 client.bind(5801);

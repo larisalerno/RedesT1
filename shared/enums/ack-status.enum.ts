@@ -1,6 +1,5 @@
 export enum AckStatus {
-    NOT_SENT                = 0,
-    SENT_NO_ACK_RECEIVED    = 1,
-    SENT_ACK_RECEIVED       = 2,
-    ACK_FULL_RECEIVED       = 3
+    SENT_NO_ACK                = 0,
+    SENT_ACK_OK                = 1,
+    ACK_FULL_RECEIVED          = 2
 }

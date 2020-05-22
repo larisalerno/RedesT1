@@ -36,32 +36,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var dgram_1 = require("dgram");
-var message_code_enum_1 = require("./shared/enums/message-code.enum");
-var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
-var current_message = {};
-(function () {
-    var host = '127.0.0.1';
-    var port = 5801;
-    var response_messages = [];
-    var server = dgram_1.createSocket('udp4');
-    server.on('listening', function () {
-        console.log("Silvio Santos is listening on port 5800.");
-    });
-    server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
-        var received_message;
+function default_1(min, max) {
+    return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            received_message = JSON.parse(message.toString());
-            if (received_message.code == message_code_enum_1.MessageCode.CONNECT) {
-                received_message.ack = ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED;
-                current_message = received_message;
-                server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
-                    if (error)
-                        throw error;
-                });
-            }
-            return [2 /*return*/];
+            return [2 /*return*/, Math.floor(Math.random() * (max - min + 1)) + min];
         });
-    }); });
-    server.bind(5800);
-})();
+    });
+}
+exports.default = default_1;
