@@ -53,7 +53,7 @@ var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
             received_message = JSON.parse(message.toString());
             if (received_message.code === mssage_code_enum_1.MessageCode.CONNECT) {
                 response_messages.push(received_message);
-                received_message.acknowledgement = ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED;
+                received_message.ack = ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED;
                 response_messages.map(function (message, index) { return __awaiter(void 0, void 0, void 0, function () {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
@@ -61,7 +61,7 @@ var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
                                 console.log('response message: ', message);
                                 _a.label = 1;
                             case 1:
-                                if (!(message.acknowledgement === ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED && message.code === mssage_code_enum_1.MessageCode.CONNECT)) return [3 /*break*/, 3];
+                                if (!(message.ack === ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED && message.code === mssage_code_enum_1.MessageCode.CONNECT)) return [3 /*break*/, 3];
                                 return [4 /*yield*/, sleep(6000)];
                             case 2:
                                 _a.sent();
@@ -75,8 +75,11 @@ var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
                     });
                 }); });
             }
-            else {
-                console.log("message was different from connect: ", message);
+            /**
+             * @TODO Código que irá tratar a resposta do usuário para a pergunta
+             */
+            else if (received_message.code === mssage_code_enum_1.MessageCode.ANSWER_RECEIVED) {
+                console.log("received an answer from client: ", message);
             }
             return [2 /*return*/];
         });

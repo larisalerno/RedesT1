@@ -31,9 +31,15 @@ import { AckStatus } from "./shared/enums/ack-status.enum";
                     });
                 }
             });  
-        } else {
-            console.log("message was different from connect: ", message);
+        } 
+        
+        /**
+         * @TODO Código que irá tratar a resposta do usuário para a pergunta
+         */
+        else if (received_message.code === MessageCode.ANSWER_RECEIVED) {
+            console.log("received an answer from client: ", message);
         }
+
     });
     
     
