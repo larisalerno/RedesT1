@@ -24,7 +24,7 @@ let current_message = {};
         
 
         if(received_message.code == MessageCode.CONNECT) {
-            received_message.ack = AckStatus.SENT_NO_ACK_RECEIVED;
+            received_message.ack = AckStatus.SENT_ACK_OK;
             current_message = received_message;
 
             server.send(Buffer.from(JSON.stringify(received_message)), port, host, (error) => {

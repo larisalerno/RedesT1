@@ -123,7 +123,6 @@ async function start() {
         if (current_message.code == MessageCode.CONNECT && current_message.ack == AckStatus.SENT_ACK_OK) {
             console.log('Conexão estabelecida!');
             connected = true;
-            break;
         }
 
     }
