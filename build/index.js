@@ -45,6 +45,7 @@ var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
 var generate_questions_aux_1 = __importDefault(require("./shared/auxiliar/generate-questions.aux"));
 var current_message = {};
 var current_score = 0;
+var current_question = { description: '', alternatives: [] };
 (function () {
     var host = '127.0.0.1';
     var port = 5801;
@@ -54,7 +55,7 @@ var current_score = 0;
         console.log("Silvio Santos is listening on port 5800.");
     });
     server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
-        var received_message, question, current_answer;
+        var received_message, question, current_answer, chosen_alternative, question;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -71,22 +72,55 @@ var current_score = 0;
                     return [4 /*yield*/, generate_questions_aux_1.default(current_score)];
                 case 1:
                     question = _a.sent();
+                    current_question = question;
+                    console.log('Pergunta atual: ', current_question);
                     current_message = received_message;
+                    received_message.ack = ack_status_enum_1.AckStatus.SENT_ACK_OK;
+                    //console.log('Sending to player: ', received_message);
+                    server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
                     received_message.message = { description: question.description, alternatives: question.alternatives };
                     received_message.code = message_code_enum_1.MessageCode.QUESTION_RECEIVED;
-                    received_message.ack = ack_status_enum_1.AckStatus.SENT_ACK_OK;
-                    console.log('Sending to player: ', received_message);
                     server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
                         if (error)
                             throw error;
                     });
                     _a.label = 2;
                 case 2:
-                    if (received_message.code == message_code_enum_1.MessageCode.ANSWER_RECEIVED) {
-                        current_answer = received_message;
-                        console.log('current answer: ', current_answer);
-                    }
-                    return [2 /*return*/];
+                    if (!(received_message.code == message_code_enum_1.MessageCode.ANSWER_RECEIVED)) return [3 /*break*/, 6];
+                    current_answer = received_message;
+                    chosen_alternative = current_answer.message;
+                    console.log('chosen_alternative', chosen_alternative);
+                    console.log('current question', current_question);
+                    if (!(current_question.correctAnwserIndex == chosen_alternative)) return [3 /*break*/, 4];
+                    //Keep playing
+                    console.log('Keep playing');
+                    current_score++;
+                    return [4 /*yield*/, generate_questions_aux_1.default(current_score)];
+                case 3:
+                    question = _a.sent();
+                    current_question = question;
+                    received_message.message = { description: question.description, alternatives: question.alternatives };
+                    received_message.code = message_code_enum_1.MessageCode.QUESTION_RECEIVED;
+                    server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    return [3 /*break*/, 5];
+                case 4:
+                    received_message.code = message_code_enum_1.MessageCode.GAME_OVER_RECEIVED;
+                    server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    console.log('Encerrando partida...');
+                    _a.label = 5;
+                case 5:
+                    console.log('user answered: ', current_answer);
+                    _a.label = 6;
+                case 6: return [2 /*return*/];
             }
         });
     }); });

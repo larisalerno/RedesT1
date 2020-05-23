@@ -18,6 +18,8 @@ let current_question    : any     = {};
 let received_question   : any     = {};
 let connected           : boolean = false;
 let game_started        : boolean = false;
+let has_shown_question  : boolean = false;
+let keep_playing        : boolean = true;
 
 /**
  * Statuses:
@@ -46,7 +48,13 @@ function iterate() {
             await exit();
         }
 
-        if(checkAlternative(result.answer)) {
+        if(connected && game_started && !has_shown_question) {
+            console.log('\n\nSua pergunta:', current_question.message.description);
+            console.log('\nAs alternativas:', current_question.message.alternatives);
+            has_shown_question = true;
+        }
+
+        if(await checkAlternative(result.answer) && connected && game_started) {
             await play(result.answer);
         }
 
@@ -80,9 +88,12 @@ client.on("message", async (message : Buffer, rinfo : RemoteInfo) => {
     }
 
     if (json_message.code == MessageCode.QUESTION_RECEIVED) {
+        received_question = current_question;
         current_question = json_message;
-        console.log(current_question);
-        console.log('Mensagem: ', json_message);
+    }
+
+    if (json_message.code == MessageCode.GAME_OVER_RECEIVED) {
+        keep_playing = false;
     }
 
 });
@@ -173,7 +184,37 @@ async function exit() {
 //TODO!
 async function play(answer : any) {
 
-    
+    console.log('Minha resposta é: ', answer);
+
+    let check_answer_retries = 0;
+
+    // Constroi a mensagem
+    let answer_message : Message = { code: MessageCode.ANSWER_RECEIVED, ack: AckStatus.SENT_NO_ACK, message: answer};
+
+
+    // Envia a mensagem com a resposta
+    client.send(Buffer.from(JSON.stringify(answer_message)), port, host, (error) => {
+        if(error) throw error;
+    });
+
+    // Aguarda a atualização da resposta.
+    while(check_answer_retries < 5) {
+        await sleep(5000);
+
+        //Se resposta correta, segue jogando;
+        if(keep_playing) {
+            console.log('Aguardando a próxima pergunta...');
+            await sleep(10000);
+            console.log(current_question);
+            return;
+        }
+        //Se resposta errada, fim de jogo;
+        if(!keep_playing) {
+            console.log('Você perdeu!')
+            return;
+        }
+    }
+
 }
 
 client.bind(5801);

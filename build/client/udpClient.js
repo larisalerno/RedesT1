@@ -54,6 +54,8 @@ var current_question = {};
 var received_question = {};
 var connected = false;
 var game_started = false;
+var has_shown_question = false;
+var keep_playing = true;
 /**
  * Statuses:
  * 0 : not sent
@@ -93,12 +95,19 @@ function iterate() {
                     _a.sent();
                     _a.label = 8;
                 case 8:
-                    if (!check_alternative_aux_1.default(result.answer)) return [3 /*break*/, 10];
-                    return [4 /*yield*/, play(result.answer)];
+                    if (connected && game_started && !has_shown_question) {
+                        console.log('\n\nSua pergunta:', current_question.message.description);
+                        console.log('\nAs alternativas:', current_question.message.alternatives);
+                        has_shown_question = true;
+                    }
+                    return [4 /*yield*/, check_alternative_aux_1.default(result.answer)];
                 case 9:
-                    _a.sent();
-                    _a.label = 10;
+                    if (!((_a.sent()) && connected && game_started)) return [3 /*break*/, 11];
+                    return [4 /*yield*/, play(result.answer)];
                 case 10:
+                    _a.sent();
+                    _a.label = 11;
+                case 11:
                     iterate();
                     return [2 /*return*/];
             }
@@ -125,9 +134,11 @@ client.on("message", function (message, rinfo) { return __awaiter(void 0, void 0
             game_started == true;
         }
         if (json_message.code == message_code_enum_1.MessageCode.QUESTION_RECEIVED) {
+            received_question = current_question;
             current_question = json_message;
-            console.log(current_question);
-            console.log('Mensagem: ', json_message);
+        }
+        if (json_message.code == message_code_enum_1.MessageCode.GAME_OVER_RECEIVED) {
+            keep_playing = false;
         }
         return [2 /*return*/];
     });
@@ -232,21 +243,43 @@ function exit() {
         });
     });
 }
+//TODO!
 function play(answer) {
     return __awaiter(this, void 0, void 0, function () {
-        var message;
+        var check_answer_retries, answer_message;
         return __generator(this, function (_a) {
-            if (game_started && connected) {
-                console.log('Pergunta:\n\n', current_question);
+            switch (_a.label) {
+                case 0:
+                    console.log('Minha resposta é: ', answer);
+                    check_answer_retries = 0;
+                    answer_message = { code: message_code_enum_1.MessageCode.ANSWER_RECEIVED, ack: ack_status_enum_1.AckStatus.SENT_NO_ACK, message: answer };
+                    // Envia a mensagem com a resposta
+                    client.send(Buffer.from(JSON.stringify(answer_message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    _a.label = 1;
+                case 1:
+                    if (!(check_answer_retries < 5)) return [3 /*break*/, 5];
+                    return [4 /*yield*/, sleep_aux_1.default(5000)];
+                case 2:
+                    _a.sent();
+                    if (!keep_playing) return [3 /*break*/, 4];
+                    console.log('Aguardando a próxima pergunta...');
+                    return [4 /*yield*/, sleep_aux_1.default(10000)];
+                case 3:
+                    _a.sent();
+                    console.log(current_question);
+                    return [2 /*return*/];
+                case 4:
+                    //Se resposta errada, fim de jogo;
+                    if (!keep_playing) {
+                        console.log('Você perdeu!');
+                        return [2 /*return*/];
+                    }
+                    return [3 /*break*/, 1];
+                case 5: return [2 /*return*/];
             }
-            message = { code: message_code_enum_1.MessageCode.ANSWER_RECEIVED, ack: ack_status_enum_1.AckStatus.SENT_NO_ACK, message: answer };
-            if (game_started && connected) {
-                client.send(Buffer.from(JSON.stringify(message)), port, host, function (error) {
-                    if (error)
-                        throw error;
-                });
-            }
-            return [2 /*return*/];
         });
     });
 }
