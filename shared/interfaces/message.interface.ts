@@ -3,7 +3,7 @@ import { AckStatus }    from '../enums/ack-status.enum';
 import { Question }     from "./question.interface";
 
 export interface Message {
-    code    : MessageCode,
-    ack     : AckStatus,
+    code     : MessageCode,
+    ack      : AckStatus,
     message? : Question,
 }

@@ -43,34 +43,40 @@ var questions_1 = require("../../misc/questions");
 var questions_2 = require("../../misc/questions");
 var questions_3 = require("../../misc/questions");
 var random_aux_1 = __importDefault(require("./random.aux"));
-function default_1(difficulty) {
+var game_difficulty_enum_1 = require("../enums/game-difficulty.enum");
+/**
+ *
+ * @param score Current player score
+ * Selects a question for the player based on its current score.
+ * Then removes the question from the array to avoid duplicated questions.
+ */
+function default_1(score) {
     return __awaiter(this, void 0, void 0, function () {
-        var chosen_question, number;
+        var chosen_question, difficulty, position;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     chosen_question = {};
-                    return [4 /*yield*/, random_aux_1.default(0, 4)];
+                    difficulty = '';
+                    position = 0;
+                    return [4 /*yield*/, generate_difficulty(score)];
                 case 1:
-                    number = _a.sent();
+                    difficulty = _a.sent();
+                    return [4 /*yield*/, generate_position(difficulty)];
+                case 2:
+                    position = _a.sent();
                     switch (difficulty) {
-                        case 'easy':
-                            questions_1.easyQuestions.map(function (question, value) {
-                                console.log(question);
-                                chosen_question = question;
-                            });
+                        case game_difficulty_enum_1.GameDifficulty.EASY:
+                            chosen_question = questions_1.easyQuestions[position];
+                            questions_1.easyQuestions.splice(position, 1);
                             break;
-                        case 'medium':
-                            questions_2.mediumQuestions.map(function (question, value) {
-                                console.log(question);
-                                chosen_question = question;
-                            });
+                        case game_difficulty_enum_1.GameDifficulty.MEDIUM:
+                            chosen_question = questions_2.mediumQuestions[position];
+                            questions_2.mediumQuestions.splice(position, 1);
                             break;
-                        case 'hard':
-                            questions_3.hardQuestions.map(function (question, value) {
-                                console.log(question);
-                                chosen_question = question;
-                            });
+                        case game_difficulty_enum_1.GameDifficulty.HARD:
+                            chosen_question = questions_3.hardQuestions[position];
+                            questions_3.hardQuestions.splice(position, 1);
                             break;
                     }
                     return [2 /*return*/, chosen_question];
@@ -79,3 +85,50 @@ function default_1(difficulty) {
     });
 }
 exports.default = default_1;
+/**
+ *
+ * @param score Current player score.
+ * Returns a string with 'easy', 'medium' or 'hard' based on the current score.
+ */
+function generate_difficulty(score) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            if (score >= 0 && score < 3) {
+                return [2 /*return*/, game_difficulty_enum_1.GameDifficulty.EASY];
+            }
+            if (score >= 3 && score < 6) {
+                return [2 /*return*/, game_difficulty_enum_1.GameDifficulty.MEDIUM];
+            }
+            if (score >= 6) {
+                return [2 /*return*/, game_difficulty_enum_1.GameDifficulty.HARD];
+            }
+            return [2 /*return*/, ''];
+        });
+    });
+}
+/**
+ *
+ * @param difficulty String may be 'easy', 'medium' or 'hard.
+ * Generates a number between 0 and the size of questions array (n-1).
+ */
+function generate_position(difficulty) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(difficulty === game_difficulty_enum_1.GameDifficulty.EASY)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, random_aux_1.default(0, questions_1.easyQuestions.length - 1)];
+                case 1: return [2 /*return*/, _a.sent()];
+                case 2:
+                    if (!(difficulty === game_difficulty_enum_1.GameDifficulty.MEDIUM)) return [3 /*break*/, 4];
+                    return [4 /*yield*/, random_aux_1.default(0, questions_2.mediumQuestions.length - 1)];
+                case 3: return [2 /*return*/, _a.sent()];
+                case 4:
+                    if (!(difficulty === game_difficulty_enum_1.GameDifficulty.HARD)) return [3 /*break*/, 6];
+                    return [4 /*yield*/, random_aux_1.default(0, questions_3.hardQuestions.length - 1)];
+                case 5: return [2 /*return*/, _a.sent()];
+                case 6: return [2 /*return*/, 0];
+            }
+        });
+    });
+}

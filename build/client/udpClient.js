@@ -43,35 +43,116 @@ var dgram_1 = require("dgram");
 var message_code_enum_1 = require("../shared/enums/message-code.enum");
 var ack_status_enum_1 = require("../shared/enums/ack-status.enum");
 var sleep_aux_1 = __importDefault(require("../shared/auxiliar/sleep.aux"));
+var check_alternative_aux_1 = __importDefault(require("../shared/auxiliar/check-alternative.aux"));
 var retries_enum_1 = require("../shared/enums/retries.enum");
 var prompt = require('prompt');
 var host = '127.0.0.1';
 var port = 5800;
 var client = dgram_1.createSocket("udp4");
 var current_message = {};
+var current_question = {};
+var received_question = {};
 var connected = false;
+var game_started = false;
 /**
  * Statuses:
  * 0 : not sent
  * 1 : sent, no ack received
  * 2 : sent, ack received
  */
-function play() {
+function iterate() {
     var _this = this;
     prompt.get(['answer'], function (err, result) { return __awaiter(_this, void 0, void 0, function () {
-        var retries, message;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     if (err) {
                         return [2 /*return*/, onErr(err)];
                     }
-                    if (result.answer === 'status') {
-                        console.log('Está conectado? ', connected ? 'Sim' : 'Não');
-                    }
+                    if (!(result.answer === 'status')) return [3 /*break*/, 2];
+                    return [4 /*yield*/, status()];
+                case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2:
                     if (!(result.answer === 'connect')) return [3 /*break*/, 4];
+                    return [4 /*yield*/, connect()];
+                case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4:
+                    if (!(result.answer === 'start')) return [3 /*break*/, 6];
+                    return [4 /*yield*/, start()];
+                case 5:
+                    _a.sent();
+                    _a.label = 6;
+                case 6:
+                    if (!(result.answer === 'exit')) return [3 /*break*/, 8];
+                    return [4 /*yield*/, exit()];
+                case 7:
+                    _a.sent();
+                    _a.label = 8;
+                case 8:
+                    if (!check_alternative_aux_1.default(result.answer)) return [3 /*break*/, 10];
+                    return [4 /*yield*/, play(result.answer)];
+                case 9:
+                    _a.sent();
+                    _a.label = 10;
+                case 10:
+                    iterate();
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+}
+prompt.start();
+iterate();
+function onErr(err) {
+    console.log(err);
+    return 1;
+}
+client.on("message", function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
+    var json_message;
+    return __generator(this, function (_a) {
+        json_message = JSON.parse(message.toString());
+        if (json_message.code == message_code_enum_1.MessageCode.CONNECT) {
+            current_message = json_message;
+        }
+        if (json_message.code == message_code_enum_1.MessageCode.GAME_STARTED) {
+            current_message = json_message;
+        }
+        if (json_message.code == message_code_enum_1.MessageCode.GAME_STARTED && json_message.ack == ack_status_enum_1.AckStatus.SENT_ACK_OK) {
+            game_started == true;
+        }
+        if (json_message.code == message_code_enum_1.MessageCode.QUESTION_RECEIVED) {
+            current_question = json_message;
+            console.log(current_question);
+            console.log('Mensagem: ', json_message);
+        }
+        return [2 /*return*/];
+    });
+}); });
+//  ################# MÉTODOS AUXILIARES ####################
+function status() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            console.log('Está conectado? ', connected ? 'Sim' : 'Não');
+            return [2 /*return*/];
+        });
+    });
+}
+function connect() {
+    return __awaiter(this, void 0, void 0, function () {
+        var retries, message;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (connected) {
+                        console.log('Você já está conectado!\n\n');
+                        return [2 /*return*/];
+                    }
                     retries = 0;
-                    message = { code: message_code_enum_1.MessageCode.CONNECT, ack: ack_status_enum_1.AckStatus.NOT_SENT };
+                    message = { code: message_code_enum_1.MessageCode.CONNECT, ack: ack_status_enum_1.AckStatus.SENT_NO_ACK };
                     // Armazena a mensagem atual
                     current_message = message;
                     _a.label = 1;
@@ -87,39 +168,86 @@ function play() {
                     _a.sent();
                     retries++;
                     console.log("Tentativa " + retries);
-                    if (current_message.code == message_code_enum_1.MessageCode.CONNECT && current_message.ack == ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED) {
+                    if (current_message.code == message_code_enum_1.MessageCode.CONNECT && current_message.ack == ack_status_enum_1.AckStatus.SENT_ACK_OK) {
                         console.log('Conexão estabelecida!');
                         connected = true;
                         return [3 /*break*/, 3];
                     }
                     return [3 /*break*/, 1];
                 case 3:
-                    if (current_message.code == message_code_enum_1.MessageCode.CONNECT && current_message.ack == ack_status_enum_1.AckStatus.NOT_SENT) {
+                    if (current_message.code == message_code_enum_1.MessageCode.CONNECT && current_message.ack == ack_status_enum_1.AckStatus.SENT_NO_ACK) {
                         console.log('Não foi possível estabelecer uma conexão.');
                     }
-                    _a.label = 4;
-                case 4:
-                    play();
                     return [2 /*return*/];
             }
         });
-    }); });
-}
-prompt.start();
-play();
-function onErr(err) {
-    console.log(err);
-    return 1;
-}
-client.on("message", function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
-    var json_message;
-    return __generator(this, function (_a) {
-        json_message = JSON.parse(message.toString());
-        current_message = json_message;
-        if (json_message.code == message_code_enum_1.MessageCode.CONNECT && json_message.ack == ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED) {
-            current_message = json_message;
-        }
-        return [2 /*return*/];
     });
-}); });
+}
+function start() {
+    return __awaiter(this, void 0, void 0, function () {
+        var retries, message;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    retries = 0;
+                    message = { code: message_code_enum_1.MessageCode.GAME_STARTED, ack: ack_status_enum_1.AckStatus.SENT_NO_ACK };
+                    // Armazena a mensagem atual
+                    current_message = message;
+                    _a.label = 1;
+                case 1:
+                    if (!(retries < retries_enum_1.Retries.GAME_START)) return [3 /*break*/, 3];
+                    client.send(Buffer.from(JSON.stringify(message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    console.log("Tentando iniciar o jogo... \n Tentativa " + retries);
+                    return [4 /*yield*/, sleep_aux_1.default(4000)];
+                case 2:
+                    _a.sent();
+                    retries++;
+                    if (current_message.code == message_code_enum_1.MessageCode.GAME_STARTED && current_message.ack == ack_status_enum_1.AckStatus.SENT_ACK_OK) {
+                        console.log('Jogo iniciado!');
+                        game_started = true;
+                        return [3 /*break*/, 3];
+                    }
+                    return [3 /*break*/, 1];
+                case 3:
+                    if (current_message.code == message_code_enum_1.MessageCode.GAME_STARTED && current_message.ack == ack_status_enum_1.AckStatus.SENT_NO_ACK) {
+                        console.log('Não foi possível iniciar o jogo. Você precisa se conectar novamente.');
+                        connected = false;
+                        game_started = false;
+                        current_message = {};
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function exit() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            console.log('Até mais!');
+            process.exit();
+            return [2 /*return*/];
+        });
+    });
+}
+function play(answer) {
+    return __awaiter(this, void 0, void 0, function () {
+        var message;
+        return __generator(this, function (_a) {
+            if (game_started && connected) {
+                console.log('Pergunta:\n\n', current_question);
+            }
+            message = { code: message_code_enum_1.MessageCode.ANSWER_RECEIVED, ack: ack_status_enum_1.AckStatus.SENT_NO_ACK, message: answer };
+            if (game_started && connected) {
+                client.send(Buffer.from(JSON.stringify(message)), port, host, function (error) {
+                    if (error)
+                        throw error;
+                });
+            }
+            return [2 /*return*/];
+        });
+    });
+}
 client.bind(5801);

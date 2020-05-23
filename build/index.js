@@ -35,11 +35,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var dgram_1 = require("dgram");
 var message_code_enum_1 = require("./shared/enums/message-code.enum");
 var ack_status_enum_1 = require("./shared/enums/ack-status.enum");
+var generate_questions_aux_1 = __importDefault(require("./shared/auxiliar/generate-questions.aux"));
 var current_message = {};
+var current_score = 0;
 (function () {
     var host = '127.0.0.1';
     var port = 5801;
@@ -49,18 +54,40 @@ var current_message = {};
         console.log("Silvio Santos is listening on port 5800.");
     });
     server.on('message', function (message, rinfo) { return __awaiter(void 0, void 0, void 0, function () {
-        var received_message;
+        var received_message, question, current_answer;
         return __generator(this, function (_a) {
-            received_message = JSON.parse(message.toString());
-            if (received_message.code == message_code_enum_1.MessageCode.CONNECT) {
-                received_message.ack = ack_status_enum_1.AckStatus.SENT_NO_ACK_RECEIVED;
-                current_message = received_message;
-                server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
-                    if (error)
-                        throw error;
-                });
+            switch (_a.label) {
+                case 0:
+                    received_message = JSON.parse(message.toString());
+                    if (received_message.code == message_code_enum_1.MessageCode.CONNECT) {
+                        received_message.ack = ack_status_enum_1.AckStatus.SENT_ACK_OK;
+                        current_message = received_message;
+                        server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                            if (error)
+                                throw error;
+                        });
+                    }
+                    if (!(received_message.code == message_code_enum_1.MessageCode.GAME_STARTED)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, generate_questions_aux_1.default(current_score)];
+                case 1:
+                    question = _a.sent();
+                    current_message = received_message;
+                    received_message.message = { description: question.description, alternatives: question.alternatives };
+                    received_message.code = message_code_enum_1.MessageCode.QUESTION_RECEIVED;
+                    received_message.ack = ack_status_enum_1.AckStatus.SENT_ACK_OK;
+                    console.log('Sending to player: ', received_message);
+                    server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    _a.label = 2;
+                case 2:
+                    if (received_message.code == message_code_enum_1.MessageCode.ANSWER_RECEIVED) {
+                        current_answer = received_message;
+                        console.log('current answer: ', current_answer);
+                    }
+                    return [2 /*return*/];
             }
-            return [2 /*return*/];
         });
     }); });
     server.bind(5800);
