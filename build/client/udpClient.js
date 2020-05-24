@@ -45,6 +45,7 @@ var ack_status_enum_1 = require("../shared/enums/ack-status.enum");
 var sleep_aux_1 = __importDefault(require("../shared/auxiliar/sleep.aux"));
 var check_alternative_aux_1 = __importDefault(require("../shared/auxiliar/check-alternative.aux"));
 var retries_enum_1 = require("../shared/enums/retries.enum");
+var youwin_1 = require("../misc/youwin");
 var prompt = require('prompt');
 var host = '127.0.0.1';
 var port = 5800;
@@ -139,6 +140,11 @@ client.on("message", function (message, rinfo) { return __awaiter(void 0, void 0
         }
         if (json_message.code == message_code_enum_1.MessageCode.GAME_OVER_RECEIVED) {
             keep_playing = false;
+        }
+        if (json_message.code == message_code_enum_1.MessageCode.YOU_WIN) {
+            keep_playing = false;
+            console.log('Você venceu!\n\n');
+            console.log(youwin_1.win);
         }
         return [2 /*return*/];
     });

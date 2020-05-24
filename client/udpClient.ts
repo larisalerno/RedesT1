@@ -5,6 +5,7 @@ import { AckStatus } from '../shared/enums/ack-status.enum';
 import sleep from "../shared/auxiliar/sleep.aux";
 import checkAlternative from "../shared/auxiliar/check-alternative.aux";
 import { Retries } from '../shared/enums/retries.enum';
+import { win } from '../misc/youwin';
 
 
 const prompt = require('prompt');
@@ -20,6 +21,7 @@ let connected           : boolean = false;
 let game_started        : boolean = false;
 let has_shown_question  : boolean = false;
 let keep_playing        : boolean = true;
+let win_game            : boolean = false;
 
 /**
  * Statuses:
@@ -94,6 +96,14 @@ client.on("message", async (message : Buffer, rinfo : RemoteInfo) => {
 
     if (json_message.code == MessageCode.GAME_OVER_RECEIVED) {
         keep_playing = false;
+    }
+
+    if (json_message.code == MessageCode.YOU_WIN) {
+        keep_playing = false;
+        win_game = true;
+        console.log('Você venceu!\n\n')
+
+        console.log(win);
     }
 
 });
@@ -209,7 +219,7 @@ async function play(answer : any) {
             return;
         }
         //Se resposta errada, fim de jogo;
-        if(!keep_playing) {
+        if(!keep_playing && !win_game) {
             console.log('Você perdeu!')
             return;
         }

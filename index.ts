@@ -72,6 +72,16 @@ let current_question : Question = { description: '', alternatives: []};
                 current_score++;
 
                 //Se pontuacao == 6, vitória e fim do jogo.
+                if(current_score == 6) {
+
+                    received_message.code = MessageCode.YOU_WIN;
+
+                    server.send(Buffer.from(JSON.stringify(received_message)), port, host, (error) => {
+                        if(error) throw error;
+                    });
+    
+                } else {
+
                 let question = await generateQuestion(current_score);
                 current_question = question;
 
@@ -81,6 +91,7 @@ let current_question : Question = { description: '', alternatives: []};
                 server.send(Buffer.from(JSON.stringify(received_message)), port, host, (error) => {
                     if(error) throw error;
                 });
+            }
 
             } else {
                 received_message.code = MessageCode.GAME_OVER_RECEIVED;

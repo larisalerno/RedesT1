@@ -89,17 +89,24 @@ var current_question = { description: '', alternatives: [] };
                     });
                     _a.label = 2;
                 case 2:
-                    if (!(received_message.code == message_code_enum_1.MessageCode.ANSWER_RECEIVED)) return [3 /*break*/, 6];
+                    if (!(received_message.code == message_code_enum_1.MessageCode.ANSWER_RECEIVED)) return [3 /*break*/, 8];
                     current_answer = received_message;
                     chosen_alternative = current_answer.message;
                     console.log('chosen_alternative', chosen_alternative);
                     console.log('current question', current_question);
-                    if (!(current_question.correctAnwserIndex == chosen_alternative)) return [3 /*break*/, 4];
+                    if (!(current_question.correctAnwserIndex == chosen_alternative)) return [3 /*break*/, 6];
                     //Keep playing
                     console.log('Keep playing');
                     current_score++;
-                    return [4 /*yield*/, generate_questions_aux_1.default(current_score)];
-                case 3:
+                    if (!(current_score == 6)) return [3 /*break*/, 3];
+                    received_message.code = message_code_enum_1.MessageCode.YOU_WIN;
+                    server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
+                        if (error)
+                            throw error;
+                    });
+                    return [3 /*break*/, 5];
+                case 3: return [4 /*yield*/, generate_questions_aux_1.default(current_score)];
+                case 4:
                     question = _a.sent();
                     current_question = question;
                     received_message.message = { description: question.description, alternatives: question.alternatives };
@@ -108,19 +115,20 @@ var current_question = { description: '', alternatives: [] };
                         if (error)
                             throw error;
                     });
-                    return [3 /*break*/, 5];
-                case 4:
+                    _a.label = 5;
+                case 5: return [3 /*break*/, 7];
+                case 6:
                     received_message.code = message_code_enum_1.MessageCode.GAME_OVER_RECEIVED;
                     server.send(Buffer.from(JSON.stringify(received_message)), port, host, function (error) {
                         if (error)
                             throw error;
                     });
                     console.log('Encerrando partida...');
-                    _a.label = 5;
-                case 5:
+                    _a.label = 7;
+                case 7:
                     console.log('user answered: ', current_answer);
-                    _a.label = 6;
-                case 6: return [2 /*return*/];
+                    _a.label = 8;
+                case 8: return [2 /*return*/];
             }
         });
     }); });
