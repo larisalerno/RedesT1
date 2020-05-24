@@ -223,7 +223,10 @@ async function play(answer : any) {
             console.log('Você perdeu!')
             return;
         }
+        check_answer_retries++;
     }
+
+    console.log('Comunicação com o servidor perdida.');
 
 }
 
