@@ -1,27 +1,27 @@
 import { createSocket, Socket, RemoteInfo } from 'dgram';
-import { Message } from '../shared/interfaces/message.interface';
-import { MessageCode } from '../shared/enums/message-code.enum';
-import { AckStatus } from '../shared/enums/ack-status.enum';
-import sleep from "../shared/auxiliar/sleep.aux";
-import checkAlternative from "../shared/auxiliar/check-alternative.aux";
-import { Retries } from '../shared/enums/retries.enum';
-import { win } from '../misc/youwin';
+import { Message }                          from '../shared/interfaces/message.interface';
+import { MessageCode }                      from '../shared/enums/message-code.enum';
+import { AckStatus }                        from '../shared/enums/ack-status.enum';
+import sleep                                from "../shared/auxiliar/sleep.aux";
+import checkAlternative                     from "../shared/auxiliar/check-alternative.aux";
+import { Retries }                          from '../shared/enums/retries.enum';
+import { win }                              from '../misc/youwin';
 
+const prompt                       = require('prompt');
 
-const prompt = require('prompt');
+const host              :  string  = '127.0.0.1';
+const port              :  number  =  5800;
+const client            :  Socket  = createSocket("udp4");
 
-const host    :  string  = '127.0.0.1';
-const port    :  number  =  5800;
-const client  :  Socket  = createSocket("udp4");
-
+let current_question    : Message;
 let current_message     : any     = {};
-let current_question    : any     = {};
 let received_question   : any     = {};
 let connected           : boolean = false;
 let game_started        : boolean = false;
 let has_shown_question  : boolean = false;
 let keep_playing        : boolean = true;
 let win_game            : boolean = false;
+let current_money       : number  = 0;
 
 /**
  * Statuses:
@@ -29,6 +29,25 @@ let win_game            : boolean = false;
  * 1 : sent, no ack received
  * 2 : sent, ack received
  */
+
+(() => {
+    console.log(
+        `################### MENU DE OPÇÕES ###################
+
+
+        Para começar a jogar, digite os seguintes comandos:
+
+        * connect   - Estabelece conexão com o servidor de jogo
+        * start     - Inicia uma nova partida do Show do Milhão 
+        
+        
+        Outros comandos úteis:
+
+        * status    - Verifica o status da sua conexão com o servidor 
+        * exit      - Finaliza a partida e encerra a conexão com o servidor
+        `
+    );
+})();
 
 function iterate() {
     prompt.get(['answer'], async (err : any, result : any) => {
@@ -51,8 +70,11 @@ function iterate() {
         }
 
         if(connected && game_started && !has_shown_question) {
-            console.log('\n\nSua pergunta:', current_question.message.description);
-            console.log('\nAs alternativas:', current_question.message.alternatives);
+            console.log('\n\nSua pergunta:', current_question.message!.question.description);
+            let alternatives = '\n\n';
+            current_question.message!.question.alternatives.forEach(alternative => alternatives += `${alternative}\n`)
+            console.log('\nAs alternativas:', alternatives);
+            console.log(`\nSeu premio até agora: R$ ${current_money} \n\n`)
             has_shown_question = true;
         }
 
@@ -90,8 +112,9 @@ client.on("message", async (message : Buffer, rinfo : RemoteInfo) => {
     }
 
     if (json_message.code == MessageCode.QUESTION_RECEIVED) {
-        received_question = current_question;
-        current_question = json_message;
+        received_question   = current_question;
+        current_question    = json_message;
+        current_money       = json_message.message!.acc_money
     }
 
     if (json_message.code == MessageCode.GAME_OVER_RECEIVED) {
@@ -100,7 +123,7 @@ client.on("message", async (message : Buffer, rinfo : RemoteInfo) => {
 
     if (json_message.code == MessageCode.YOU_WIN) {
         keep_playing = false;
-        win_game = true;
+        win_game     = true;
         console.log('Você venceu!\n\n')
 
         console.log(win);
@@ -213,9 +236,13 @@ async function play(answer : any) {
 
         //Se resposta correta, segue jogando;
         if(keep_playing) {
-            console.log('Aguardando a próxima pergunta...');
+            console.log('Certa resposta! Aguardando a próxima pergunta...');
             await sleep(10000);
-            console.log(current_question);
+            console.log('\n\nSua pergunta:', current_question.message!.question.description);
+            let alternatives = '\n\n';
+            current_question.message!.question.alternatives.forEach(alternative => alternatives += `${alternative}\n`)
+            console.log('\nAs alternativas:', alternatives);
+            console.log(`\nSeu premio até agora: R$ ${current_money} \n\n`)
             return;
         }
         //Se resposta errada, fim de jogo;

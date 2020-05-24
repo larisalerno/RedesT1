@@ -16,9 +16,8 @@ export default async function(score : number) {
     let difficulty : string = '';
     let position = 0;
 
-    difficulty = await generate_difficulty(score);
-
-    position = await generate_position(difficulty);
+    difficulty  = await generate_difficulty(score);
+    position    = await generate_position(difficulty);
 
     switch(difficulty) {
         case GameDifficulty.EASY:
@@ -44,13 +43,13 @@ export default async function(score : number) {
  * Returns a string with 'easy', 'medium' or 'hard' based on the current score.
  */
 async function generate_difficulty(score : number) {
-    if(score >= 0 && score < 3) {
+    if(score >= 0 && score < 5) {
         return GameDifficulty.EASY;
     }
-    if(score >= 3 && score < 6) {
+    if(score >= 5 && score < 10) {
         return GameDifficulty.MEDIUM;
     }
-    if(score >= 6) {
+    if(score >= 10) {
         return GameDifficulty.HARD;
     }
 
